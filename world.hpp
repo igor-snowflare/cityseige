@@ -6,6 +6,7 @@
 class World {
 public:
 	World(int x_size, int y_size);
+	void render_world(SDL_Renderer* ren);
 	//&Block get_block(x, y);
 
 private:
