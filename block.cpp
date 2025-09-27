@@ -1,8 +1,9 @@
 #include <iostream>
 #include "config.hpp"
+#include "elevation_colors.hpp"
 #include "block.hpp"
 
-void Block::setCoordinates(int x_pos, int y_pos, std::vector<float>& corners) {
+void Block::setCoordinates(int x_pos, int y_pos, std::vector<float>& corners, int corners_x_size) {
 	// Log the coordinates
 	this->x_pos = x_pos;
 	this->y_pos = y_pos;
@@ -13,6 +14,8 @@ void Block::setCoordinates(int x_pos, int y_pos, std::vector<float>& corners) {
 	draw_position.w = static_cast<float>(block_size);
 	draw_position.h = static_cast<float>(block_size);
 
+	/*
+
 	// Calculate corner positions
 	int left = x_pos;
 	int right = x_pos + 1;
@@ -20,10 +23,12 @@ void Block::setCoordinates(int x_pos, int y_pos, std::vector<float>& corners) {
 	int bot = y_pos + 1;
 
 	// Get corner values
-	float top_left = corners[(left * top) + left];
-	float top_right = corners[(right * top) + right];
-	float bot_left = corners[(left * bot) + left];
-	float bot_right = corners[(right * bot) + right];
+	corners_x_size += 1;
+
+	float top_left = corners[(corners_x_size * top) + left];
+	float top_right = corners[(corners_x_size * top) + right];
+	float bot_left = corners[(corners_x_size * bot) + left];
+	float bot_right = corners[(corners_x_size * bot) + right];
 
 	// Calculate elevation based on corners and determine rendering color
 	elevation = (top_left + top_right + bot_left + bot_right) / 4;
@@ -31,14 +36,69 @@ void Block::setCoordinates(int x_pos, int y_pos, std::vector<float>& corners) {
 	elevation_color_green = static_cast<int>((elevation / max_elevation) * 255);
 	elevation_color_blue = static_cast<int>((elevation / max_elevation) * 255);
 
-	/*
-	std::cout << "Block coordinates updated to " << this->x_pos << ", " << this->y_pos << " with elevation of " << elevation << " and color " << elevation_color_red << std::endl;
-	std::cout << "I wil render at:" << std::endl;
-	std::cout << draw_position.x << ", " << draw_position.y << std::endl;
-	std::cout << "I wil render with size:" << std::endl;
-	std::cout << draw_position.w << ", " << draw_position.h << std::endl;
 	*/
 
+}
+
+void Block::setElevation(float target_elevation) {
+	elevation = target_elevation;
+	getElevationColor();
+}
+
+float Block::getElevation() {
+	return elevation;
+}
+
+void Block::addElevation(float target_elevation, float impact_factor) {
+	float deviation = ((target_elevation - static_cast<float>(max_elevation/2)) / (max_elevation/2)) * impact_factor;
+	elevation = elevation * (1 + deviation); 
+	getElevationColor();
+}
+
+void Block::averageElevation(std::vector<Block>& blocks, int maxIndex, int x_size) {
+	float aggregate_elevation = 0;
+	float counted_neighbours = 0;
+
+	int possible_movements[3] = {-1, 0, 1};
+
+	for (int ix=0; ix < 3; ix++) {
+		int neighbour_x = x_pos + possible_movements[ix];
+
+		if (neighbour_x < 0 || neighbour_x > x_size - 1) {
+			continue;
+		}
+
+		for (int iy=0; iy < 3; iy++) {
+			int neighbour_y = y_pos + possible_movements[iy];
+
+			if (neighbour_y < 0) {
+				continue;
+			}
+
+			int target_index = (neighbour_y * x_size) + neighbour_x;
+
+			if (target_index < maxIndex) {
+				aggregate_elevation += blocks[target_index].getElevation();
+				counted_neighbours += 1.0;
+			}
+		}
+	}
+
+	setElevation(aggregate_elevation/counted_neighbours);
+}
+
+void Block::getElevationColor() {
+	float interpolation_level = elevation/static_cast<float>(max_elevation);
+
+	elevation_color_red = low_color.red + (high_color.red - low_color.red) * interpolation_level;
+	elevation_color_green = low_color.green + (high_color.green - low_color.green) * interpolation_level;
+	elevation_color_blue = low_color.blue + (high_color.blue - low_color.blue) * interpolation_level;
+
+	/*
+	elevation_color_red = static_cast<int>((elevation / max_elevation) * 255);
+	elevation_color_green = static_cast<int>((elevation / max_elevation) * 255);
+	elevation_color_blue = static_cast<int>((elevation / max_elevation) * 255);
+	*/
 }
 
 void Block::render(SDL_Renderer* ren) {

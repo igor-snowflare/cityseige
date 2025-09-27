@@ -3,7 +3,7 @@
 #include "world.cpp"
 #include "game.cpp"
 
-int world_size_x = 136;
+int world_size_x = 138;
 int world_size_y = 78;
 
 Game *game = nullptr;
@@ -16,6 +16,11 @@ int main() {
 
 	// Generate the world
 	World landscape = World(world_size_x, world_size_y);
+	landscape.generate_terrain(primary_terrain_ratio, 1, false, 1);
+	landscape.smooth_edges(primary_terrain_ratio);
+	landscape.generate_terrain(secondary_terrain_ratio, 1, true, primary_impact);
+	landscape.smooth_edges(secondary_terrain_ratio);
+	landscape.generate_terrain(1, 1, true, secondary_impact);
 
 	// Start the game
 	game = new Game();
