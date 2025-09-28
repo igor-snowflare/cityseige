@@ -2,6 +2,7 @@
 #include "config.hpp"
 #include "world.cpp"
 #include "game.cpp"
+#include "river.cpp"
 
 int world_size_x = 138;
 int world_size_y = 78;
@@ -21,6 +22,10 @@ int main() {
 	landscape.generate_terrain(secondary_terrain_ratio, 1, true, primary_impact);
 	landscape.smooth_edges(secondary_terrain_ratio);
 	landscape.generate_terrain(1, 1, true, secondary_impact);
+
+	// Add a river
+	int river_x_pos = rand() % world_size_x;
+	River myRiver = River(river_x_pos, 0, landscape);
 
 	// Start the game
 	game = new Game();

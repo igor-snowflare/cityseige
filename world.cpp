@@ -125,3 +125,76 @@ void World::render_world(SDL_Renderer* ren) {
 		}
 	}
 }
+
+Block* World::get_block(int x, int y) {
+	int target_index = (y * x_size) + x;
+
+	if (target_index >= x_size * y_size || x < 0 || y < 0 || x >= x_size || y >= y_size) {
+		return nullptr;
+	} else {
+		return &blocks[target_index];
+	}
+}
+
+int World::worldSizeX() { return x_size; }
+int World::worldSizeY() { return y_size; }
+
+std::vector<Block*> World::neighbouringBlocks(int posX, int posY, int maxDistance) {
+	int possible_movements[(maxDistance * 2) + 1];
+	int starting_distance = maxDistance * -1;
+
+	for (int i=0; i < (maxDistance * 2) + 1; i++) {
+		possible_movements[i] = starting_distance;
+		starting_distance += 1;
+	}
+
+	std::vector<Block*> neighbours;
+
+	for (int ix=0; ix < (maxDistance * 2) + 1; ix++) {
+		for (int iy=0; iy < (maxDistance * 2) + 1; iy++) {
+
+			int neighbour_x = posX + possible_movements[ix];
+			int neighbour_y = posY + possible_movements[iy];
+
+			if (neighbour_x < 0 || neighbour_x == x_size || neighbour_y < 0 || neighbour_y == y_size || (neighbour_x == posX && neighbour_y == posY)) {
+				continue;
+			}
+
+			//std::cout << "I am pushing the block with positions of " << neighbour_x << ", " << neighbour_y << std::endl;
+			neighbours.push_back(get_block(neighbour_x, neighbour_y));
+		}
+	}
+
+	return neighbours;
+}
+
+Block* World::getLowestNeighbour(int blockX, int blockY) {
+	float currMinElevation = static_cast<float>(max_elevation);
+	Block* currentBlock = nullptr;
+
+	std::vector<Block*> neighbours = neighbouringBlocks(blockX, blockY, 1);
+
+	for (Block* candidateBlock : neighbours) {
+		if (candidateBlock->getType() == RIVER || candidateBlock->getPosY() < blockY) {
+			continue;
+		}
+
+		float candidateElevation = candidateBlock->getElevation();
+		//std::cout << "I am checking the elevation on "<< candidateBlock->getPosX() << ", " << candidateBlock->getPosY() << " - " << candidateElevation << std::endl;
+
+		if (candidateElevation < currMinElevation) {
+			currentBlock = candidateBlock;
+			currMinElevation = candidateElevation;
+			//std::cout << "I have updated my min elevation to " << currMinElevation << std::endl;
+			//std::cout << "Means I will expand river to " << currentBlock->getPosX() << ", " << currentBlock->getPosY() << std::endl;
+			//std::cout << "---" << std::endl;
+		}
+	}
+
+	return currentBlock;
+}
+
+
+void World::logRiver(Block* targetBlock) {
+	riverBlocks.push_back(targetBlock);
+}

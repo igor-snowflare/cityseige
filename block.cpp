@@ -3,6 +3,10 @@
 #include "elevation_colors.hpp"
 #include "block.hpp"
 
+Block::Block() {
+	type = EMPTY;
+}
+
 void Block::setCoordinates(int x_pos, int y_pos, std::vector<float>& corners, int corners_x_size) {
 	// Log the coordinates
 	this->x_pos = x_pos;
@@ -14,31 +18,10 @@ void Block::setCoordinates(int x_pos, int y_pos, std::vector<float>& corners, in
 	draw_position.w = static_cast<float>(block_size);
 	draw_position.h = static_cast<float>(block_size);
 
-	/*
-
-	// Calculate corner positions
-	int left = x_pos;
-	int right = x_pos + 1;
-	int top = y_pos;
-	int bot = y_pos + 1;
-
-	// Get corner values
-	corners_x_size += 1;
-
-	float top_left = corners[(corners_x_size * top) + left];
-	float top_right = corners[(corners_x_size * top) + right];
-	float bot_left = corners[(corners_x_size * bot) + left];
-	float bot_right = corners[(corners_x_size * bot) + right];
-
-	// Calculate elevation based on corners and determine rendering color
-	elevation = (top_left + top_right + bot_left + bot_right) / 4;
-	elevation_color_red = static_cast<int>((elevation / max_elevation) * 255);
-	elevation_color_green = static_cast<int>((elevation / max_elevation) * 255);
-	elevation_color_blue = static_cast<int>((elevation / max_elevation) * 255);
-
-	*/
-
 }
+
+int Block::getPosX() { return x_pos; }
+int Block::getPosY() { return y_pos; }
 
 void Block::setElevation(float target_elevation) {
 	elevation = target_elevation;
@@ -93,15 +76,20 @@ void Block::getElevationColor() {
 	elevation_color_red = low_color.red + (high_color.red - low_color.red) * interpolation_level;
 	elevation_color_green = low_color.green + (high_color.green - low_color.green) * interpolation_level;
 	elevation_color_blue = low_color.blue + (high_color.blue - low_color.blue) * interpolation_level;
-
-	/*
-	elevation_color_red = static_cast<int>((elevation / max_elevation) * 255);
-	elevation_color_green = static_cast<int>((elevation / max_elevation) * 255);
-	elevation_color_blue = static_cast<int>((elevation / max_elevation) * 255);
-	*/
 }
 
+void Block::convertToRiver() {
+	type = RIVER;
+}
+
+BlockType Block::getType() { return type; }
+
 void Block::render(SDL_Renderer* ren) {
-	SDL_SetRenderDrawColor(ren, elevation_color_red, elevation_color_green, elevation_color_blue, 255);
+	if (type == RIVER) {
+		SDL_SetRenderDrawColor(ren, 0, 0, 255, 255);
+	} else {
+		SDL_SetRenderDrawColor(ren, elevation_color_red, elevation_color_green, elevation_color_blue, 255);
+	}
+	
 	SDL_RenderFillRect(ren, &draw_position);
 }
